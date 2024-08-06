@@ -15,25 +15,48 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.entities.User;
 import com.example.service.UserService;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.github.resilience4j.retry.annotation.Retry;
+import lombok.extern.slf4j.Slf4j;
+
 @RestController
 @RequestMapping("/users")
+@Slf4j
 public class UserController {
+
+	int retryCount = 1;
+
 	@Autowired
 	private UserService userService;
-	
+
 	@PostMapping("/v1/create-users")
-	public ResponseEntity<User> createUser(@RequestBody User user){
+	public ResponseEntity<User> createUser(@RequestBody User user) {
 		User user1 = userService.saveUser(user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(user1);
 	}
+
 	@GetMapping("/v1/get-single-users/{id}")
-	public ResponseEntity<User> getSingleUser(@PathVariable int id){
+//	@CircuitBreaker(name = "ratingHotelBreaker", fallbackMethod = "ratingHotelFallback")
+//	@Retry(name = "ratingHotelService", fallbackMethod = "ratingHotelFallback")
+	@RateLimiter(name = "userRateLimiter", fallbackMethod = "ratingHotelFallback")
+	public ResponseEntity<User> getSingleUser(@PathVariable int id) {
 		User user1 = userService.getUser(id);
+		log.info("Retry Count: {}", retryCount);
+		retryCount++;
 		return ResponseEntity.ok(user1);
 	}
-	
+
+	public ResponseEntity<User> ratingHotelFallback(int id, Exception e) {
+//		log.info("Fallback is executed because service is down: {}", e.getMessage());
+
+		User user = User.builder().email("dummy@gmail.com").name("dummy")
+				.about("This user is created because some service is down").id(id).build();
+		return new ResponseEntity<>(user, HttpStatus.OK);
+	}
+
 	@GetMapping("/v1/get-all-users")
-	public ResponseEntity<List<User>> getAllUser(){
+	public ResponseEntity<List<User>> getAllUser() {
 		List<User> list = userService.getAllUser();
 		return ResponseEntity.ok(list);
 	}

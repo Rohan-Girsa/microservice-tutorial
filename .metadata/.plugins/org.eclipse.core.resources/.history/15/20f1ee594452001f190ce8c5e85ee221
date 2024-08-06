@@ -1,0 +1,27 @@
+server.port=8074
+spring.application.name=ApiGateway
+
+spring.cloud.gateway.routes[0].id=UserService
+spring.cloud.gateway.routes[0].uri=lb://UserService
+spring.cloud.gateway.routes[0].predicates[0]=Path=/users/**
+
+spring.cloud.gateway.routes[1].id=HotelService
+spring.cloud.gateway.routes[1].uri=lb://HotelService
+spring.cloud.gateway.routes[1].predicates[0]=Path=/hotels/**
+
+spring.cloud.gateway.routes[2].id=RatingService
+spring.cloud.gateway.routes[2].uri=lb://RatingService
+spring.cloud.gateway.routes[2].predicates[0]=Path=/ratings/**
+
+eureka.instance.prefer-ip-address=true
+eureka.client.fetch-registry=true
+eureka.client.register-with-eureka=true
+eureka.client.service-url.defaultZone=http://localhost:8070/eureka
+
+
+#Okta Configurations for 
+okta.oauth2.issuer=get it from okta account(security -> api)
+okta.oauth2.audience=get it from okta account(security -> api)
+okta.oauth2.client-id=get it from okta account(Applications -> applications)
+okta.oauth2.client-secret=get it from okta account(Applications -> applications)
+okta.oauth2.scopes=openid, profile, email, offline_access
